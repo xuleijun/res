@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>SystemUtil.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">regulatory-support</a> &gt; <a href="index.html" class="el_package">co.jp.fujixerox.regulatory.util</a> &gt; <span class="el_source">SystemUtil.java</span></div><h1>SystemUtil.java</h1><pre class="source lang-java linenums">package co.jp.fujixerox.regulatory.util;
+
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+
+<span class="nc" id="L12">public class SystemUtil {</span>
+	
+	 /**
+	  * ファイルあるいはフォルダが存在するかどうかを判断します
+	  * @param folderPath フォルダーパス
+	  * @param filePath     ファイルパス
+	  * @throws IOException 
+	  */
+	 public static void isExist(String folderPath, String filePath) throws IOException {
+<span class="fc bfc" id="L21" title="All 2 branches covered.">		 if (StringUtils.isNotEmpty(folderPath)) {</span>
+			 
+<span class="fc" id="L23">			 File folder = new File(folderPath);</span>
+			 //　フォルダーが存在しないの場合
+<span class="pc bpc" id="L25" title="1 of 4 branches missed.">			 if (!folder.exists()  &amp;&amp; !folder .isDirectory()) {</span>
+<span class="fc" id="L26">				 folder.mkdirs();</span>
+			 }
+		 }
+<span class="pc bpc" id="L29" title="1 of 2 branches missed.">		 if (StringUtils.isNotEmpty(filePath)) {</span>
+			 
+<span class="nc" id="L31">			 File file = new File(filePath);</span>
+			 //　ファイルが存在しないの場合
+<span class="nc bnc" id="L33" title="All 2 branches missed.">			 if (!file.exists()) {</span>
+<span class="nc" id="L34">				 file.createNewFile();</span>
+			 }
+		 }
+<span class="fc" id="L37">	 }</span>
+	 
+	 /**
+	  * ファイルあるいはフォルダが存在するかどうかを判断します
+	  * 
+	  * @retrun システム日時
+	  */
+	 public static String getSystemDate() {
+		 
+<span class="fc" id="L46">		 SimpleDateFormat sdf=new SimpleDateFormat(&quot;yyyyMMddHHmmssSSS&quot;);</span>
+<span class="fc" id="L47">		 String sysDate = sdf.format( new  Date());</span>
+		 
+<span class="fc" id="L49">		 return sysDate;</span>
+	 }
+	 
+	 /**
+	  * フォルダの下ですべてのファイルを取得する
+	  * 
+	  * @param dir 入力フォルダー
+	  * @retrun filelist ファイルリスト
+	  */
+	public static List&lt;String&gt; getAllFiles(String dir) throws Exception {
+<span class="fc" id="L59">		List&lt;String&gt; filelist = new ArrayList&lt;String&gt;();</span>
+<span class="fc" id="L60">		File root = new File(dir);</span>
+<span class="fc" id="L61">		File[] files = root.listFiles();</span>
+<span class="fc bfc" id="L62" title="All 2 branches covered.">		for(File file : files){</span>
+<span class="pc bpc" id="L63" title="1 of 2 branches missed.">			if (!file.isDirectory()) {</span>
+<span class="fc" id="L64">				filelist.add(file.getAbsolutePath());</span>
+			}
+		}
+<span class="fc" id="L67">		return filelist;</span>
+	}
+	
+	/**
+	 * ファイルを削除する
+	 * 
+	 * @param sPath ファイルパス
+	 */
+	public static void deleteFile(String sPath) {
+<span class="fc" id="L76">	    File file = new File(sPath);  </span>
+	    // ファイルが存在する場合  
+<span class="pc bpc" id="L78" title="2 of 4 branches missed.">	    if (file.exists() &amp;&amp; file.isFile()) {</span>
+<span class="fc" id="L79">	    	file.delete();</span>
+	    }  
+<span class="fc" id="L81">	} </span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://jacoco.org">JaCoCo</a> 0.5.3.201107060350</span></div></body></html>

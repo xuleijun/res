@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ConvertServlet.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">regulatory-support</a> &gt; <a href="index.html" class="el_package">co.jp.fujixerox.regulatory.servlet</a> &gt; <span class="el_source">ConvertServlet.java</span></div><h1>ConvertServlet.java</h1><pre class="source lang-java linenums">package co.jp.fujixerox.regulatory.servlet;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.util.Collection;
+import java.util.Properties;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.MultipartConfig;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.Part;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import co.jp.fujixerox.regulatory.util.DocuWorksUtil;
+import co.jp.fujixerox.regulatory.util.JacobUtil;
+import co.jp.fujixerox.regulatory.util.Pdf2HtmlUtil;
+import co.jp.fujixerox.regulatory.util.SystemUtil;
+
+@WebServlet(name = &quot;ConvertServlet&quot;, urlPatterns = &quot;/ConvertServlet&quot;)
+@MultipartConfig
+public class ConvertServlet extends HttpServlet {
+<span class="nc" id="L30">	private static final Logger logger = LogManager.getLogger(ConvertServlet.class.getName());</span>
+	private static final long serialVersionUID = 1L;
+<span class="nc" id="L32">	private Properties props = null;</span>
+
+	/**
+	 * @see HttpServlet#HttpServlet()
+	 */
+<span class="nc" id="L37">	public ConvertServlet() {</span>
+		try {
+<span class="nc" id="L39">			props = new Properties();</span>
+<span class="nc" id="L40">			InputStream in = this.getClass().getClassLoader().getResourceAsStream(&quot;system.properties&quot;);</span>
+<span class="nc" id="L41">			props.load(in);</span>
+<span class="nc" id="L42">		} catch (Exception e) {</span>
+<span class="nc" id="L43">			throw new ExceptionInInitializerError(e);</span>
+<span class="nc" id="L44">		}</span>
+<span class="nc" id="L45">	}</span>
+
+	/**
+	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse
+	 *      response)
+	 */
+	public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+<span class="nc" id="L52">		request.setCharacterEncoding(&quot;utf-8&quot;);</span>
+<span class="nc" id="L53">		response.setCharacterEncoding(&quot;utf-8&quot;);</span>
+<span class="nc" id="L54">		response.setContentType(&quot;text/html;charset=utf-8&quot;);</span>
+
+<span class="nc" id="L56">		PrintWriter out = response.getWriter();</span>
+		try {
+<span class="nc" id="L58">			String convertType = request.getParameter(&quot;changefile&quot;);</span>
+			// アップロードパス
+<span class="nc" id="L60">			String pdfUploadPath = props.getProperty(&quot;upload_pdf&quot;);</span>
+<span class="nc" id="L61">			String wordUploadPath = props.getProperty(&quot;upload_word&quot;);</span>
+<span class="nc" id="L62">			String dcuworksUploadPath = props.getProperty(&quot;upload_dcuworks&quot;);</span>
+<span class="nc" id="L63">			String excelUploadPath = props.getProperty(&quot;upload_excel&quot;);</span>
+			// アップロードファイルを取得する。
+<span class="nc" id="L65">			Collection&lt;Part&gt; parts = request.getParts();</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">			for (Part part : parts) {</span>
+				// ヘッダの情報を得ます：form-data; name=&quot;file&quot;; filename=&quot;snmp4j--api.zip&quot;
+<span class="nc" id="L68">				String header = part.getHeader(&quot;content-disposition&quot;);</span>
+				// ファイル名を取得する。
+<span class="nc" id="L70">				String fileName = getFileName(header);</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">				if (StringUtils.isEmpty(fileName)) {</span>
+<span class="nc" id="L72">					continue;</span>
+				} else {
+					// pdf2htmlEX ファイルパス
+<span class="nc" id="L75">					String exeFilePath = props.getProperty(&quot;toolpath&quot;);</span>
+					// DocuWorks2Pdf ツールパス
+<span class="nc" id="L77">					String batPath = props.getProperty(&quot;file2pdfBat&quot;);</span>
+					// printto.exeパス
+<span class="nc" id="L79">					String printtoPath = props.getProperty(&quot;printtoPath&quot;);</span>
+					// pdfファイルパス
+<span class="nc" id="L81">					String pdfFilePath = pdfUploadPath + File.separator + fileName;</span>
+					// wordファイルパス
+<span class="nc" id="L83">					String wordFilePath = wordUploadPath + File.separator + fileName;</span>
+					// dcuworksファイルパス
+<span class="nc" id="L85">					String dcuworksFilePath = dcuworksUploadPath + File.separator + fileName;</span>
+					// excelファイルパス
+<span class="nc" id="L87">					String excelFilePath = excelUploadPath + File.separator + fileName;</span>
+					// システム日時
+<span class="nc" id="L89">					String sysDate = SystemUtil.getSystemDate();</span>
+					// HTMLファイル名
+<span class="nc" id="L91">					String htmlFileName = fileName.substring(0, fileName.lastIndexOf(&quot;.&quot;));</span>
+<span class="nc" id="L92">					boolean flg = false;</span>
+<span class="nc bnc" id="L93" title="All 2 branches missed.">					if (&quot;pdf2html&quot;.equals(convertType)) {</span>
+<span class="nc" id="L94">						SystemUtil.isExist(pdfUploadPath, pdfFilePath);</span>
+						// ファイルを書きます
+<span class="nc" id="L96">						part.write(pdfFilePath);</span>
+
+						// PDFファイル変換
+<span class="nc" id="L99">						String outputPath = props.getProperty(&quot;pdf2htmloutput&quot;) + File.separator + sysDate;</span>
+<span class="nc" id="L100">						flg = Pdf2HtmlUtil.convertToHtmlEX(exeFilePath, pdfFilePath, outputPath, htmlFileName);</span>
+						
+<span class="nc bnc" id="L102" title="All 2 branches missed.">						if (flg) {</span>
+<span class="nc" id="L103">							out.println(&quot;&lt;center&gt;&quot; + fileName + &quot;ファイルの変換に成功しました。&lt;/center&gt;&lt;br/&gt;&quot;);</span>
+						} else {
+<span class="nc" id="L105">							out.println(&quot;&lt;center&gt;&quot; + fileName + &quot;ファイルの変換に失敗しました。&lt;/center&gt;&lt;br/&gt;&quot;);</span>
+						}
+<span class="nc bnc" id="L107" title="All 2 branches missed.">					} else if (&quot;word2html&quot;.equals(convertType)) {</span>
+<span class="nc" id="L108">						SystemUtil.isExist(wordUploadPath, wordFilePath);</span>
+						// ファイルを書きます
+<span class="nc" id="L110">						part.write(wordFilePath);</span>
+
+						// Wordファイル変換
+<span class="nc" id="L113">						String outputPath = props.getProperty(&quot;word2htmloutput&quot;);</span>
+<span class="nc" id="L114">						flg = JacobUtil.wordToHtml(wordFilePath, outputPath, htmlFileName, batPath, printtoPath,</span>
+								exeFilePath);
+						
+<span class="nc bnc" id="L117" title="All 2 branches missed.">						if (flg) {</span>
+<span class="nc" id="L118">							out.println(&quot;&lt;center&gt;&quot; + fileName + &quot;ファイルの変換に成功しました。&lt;/center&gt;&lt;br/&gt;&quot;);</span>
+						} else {
+<span class="nc" id="L120">							out.println(&quot;&lt;center&gt;&quot; + fileName + &quot;ファイルの変換に失敗しました。&lt;/center&gt;&lt;br/&gt;&quot;);</span>
+						}
+<span class="nc bnc" id="L122" title="All 2 branches missed.">					} else if(&quot;dcuworks2html&quot;.equals(convertType)) {</span>
+<span class="nc" id="L123">						SystemUtil.isExist(dcuworksUploadPath, dcuworksFilePath);</span>
+						// ファイルを書きます
+<span class="nc" id="L125">						part.write(dcuworksFilePath);</span>
+						
+						// pdf 出力パス
+<span class="nc" id="L128">						String outputPath = props.getProperty(&quot;docuWorks2pdfOutput&quot;);</span>
+						
+						// dcuworksファイル変換
+<span class="nc" id="L131">						flg = DocuWorksUtil.print(dcuworksFilePath, batPath, printtoPath, outputPath, exeFilePath);</span>
+						
+<span class="nc bnc" id="L133" title="All 2 branches missed.">						if (flg) {</span>
+<span class="nc" id="L134">							out.println(&quot;&lt;center&gt;&quot; + fileName + &quot;ファイルの変換に成功しました。&lt;/center&gt;&lt;br/&gt;&quot;);</span>
+						} else {
+<span class="nc" id="L136">							out.println(&quot;&lt;center&gt;&quot; + fileName + &quot;ファイルの変換に失敗しました。&lt;/center&gt;&lt;br/&gt;&quot;);</span>
+						}
+<span class="nc" id="L138">					} else {</span>
+<span class="nc" id="L139">						SystemUtil.isExist(excelUploadPath, excelFilePath);</span>
+						// ファイルを書きます
+<span class="nc" id="L141">						part.write(excelFilePath);</span>
+
+						// Excelファイル変換
+<span class="nc" id="L144">						String outputPath = props.getProperty(&quot;excel2htmloutput&quot;) + File.separator + sysDate;</span>
+<span class="nc" id="L145">						SystemUtil.isExist(outputPath, null);</span>
+<span class="nc" id="L146">						flg = JacobUtil.excelToHtml(excelFilePath,</span>
+								outputPath + File.separator + htmlFileName + &quot;.html&quot;);
+						
+<span class="nc bnc" id="L149" title="All 2 branches missed.">						if (flg) {</span>
+<span class="nc" id="L150">							out.println(&quot;&lt;center&gt;&quot; + fileName + &quot;ファイルの変換に成功しました。&lt;/center&gt;&lt;br/&gt;&quot;);</span>
+						} else {
+<span class="nc" id="L152">							out.println(&quot;&lt;center&gt;&quot; + fileName + &quot;ファイルの変換に失敗しました。&lt;/center&gt;&lt;br/&gt;&quot;);</span>
+						}
+					}
+				}
+<span class="nc" id="L156">			}</span>
+
+<span class="nc" id="L158">			out.flush();</span>
+<span class="nc" id="L159">			out.close();</span>
+<span class="nc" id="L160">		} catch (Exception e) {</span>
+<span class="nc" id="L161">			logger.error(&quot;ファイルのアップロードに失敗しました。&quot;, e);</span>
+<span class="nc" id="L162">			out.println(&quot;&lt;center&gt;ファイルのアップロードに失敗しました。&lt;/center&gt;&quot;);</span>
+<span class="nc" id="L163">			out.flush();</span>
+<span class="nc" id="L164">			out.close();</span>
+<span class="nc" id="L165">		}</span>
+<span class="nc" id="L166">	}</span>
+
+	/**
+	 * ファイル名を取得する。 ヘッダフォーマット：firefoxとgoogle：form-data; name=&quot;file&quot;;
+	 * filename=&quot;snmp4j--api.zip&quot; IE：form-data; name=&quot;file&quot;;
+	 * filename=&quot;E:\snmp4j--api.zip&quot;
+	 * 
+	 * @param header
+	 *            ヘッダ
+	 * @return ファイル名
+	 */
+	public String getFileName(String header) {
+		/**
+		 * String[] tempArr1 = header.split(&quot;;&quot;);
+		 * firefoxとgoogle：：tempArr1={form-data,name=&quot;file&quot;,filename=
+		 * &quot;snmp4j--api.zip&quot;}
+		 * IE：tempArr1={form-data,name=&quot;file&quot;,filename=&quot;E:\snmp4j--api.zip&quot;}
+		 */
+<span class="nc" id="L184">		String[] tempArr1 = header.split(&quot;;&quot;);</span>
+		/**
+		 * firefoxとgoogle：tempArr2={filename,&quot;snmp4j--api.zip&quot;}
+		 * IE：tempArr2={filename,&quot;E:\snmp4j--api.zip&quot;}
+		 */
+<span class="nc bnc" id="L189" title="All 2 branches missed.">		if (tempArr1.length != 3) {</span>
+<span class="nc" id="L190">			return null;</span>
+		} else {
+<span class="nc" id="L192">			String[] tempArr2 = tempArr1[2].split(&quot;=&quot;);</span>
+<span class="nc" id="L193">			String fileName = tempArr2[1].substring(tempArr2[1].lastIndexOf(&quot;\\&quot;) + 1).replaceAll(&quot;\&quot;&quot;, &quot;&quot;);</span>
+<span class="nc" id="L194">			return fileName;</span>
+		}
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://jacoco.org">JaCoCo</a> 0.5.3.201107060350</span></div></body></html>

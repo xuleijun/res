@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>Pdf2HtmlUtil.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">regulatory-support</a> &gt; <a href="index.html" class="el_package">co.jp.fujixerox.regulatory.util</a> &gt; <span class="el_source">Pdf2HtmlUtil.java</span></div><h1>Pdf2HtmlUtil.java</h1><pre class="source lang-java linenums">package co.jp.fujixerox.regulatory.util;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+<span class="nc" id="L7">public class Pdf2HtmlUtil {</span>
+	
+<span class="fc" id="L9">	private static final Logger logger = LogManager.getLogger(Pdf2HtmlUtil.class.getName());</span>
+	
+    /** 
+     * PDFファィルHTML変換
+     * @param exeFilePath pdf2htmlEX.exeファイルパス
+     * @param pdfFile PDFファイルパス
+     * @param destDir HTMLファイル出力パス
+     * @param htmlFileName HTMLファイル名
+     * @return 
+     */
+	public static boolean convertToHtmlEX(String exeFilePath, String pdfFile, String destDir, String htmlFileName) {
+        try {
+        	// 拡張子
+<span class="fc" id="L22">			String type = pdfFile.substring(pdfFile.lastIndexOf(&quot;.&quot;) + 1, pdfFile.length()).toLowerCase();</span>
+<span class="fc bfc" id="L23" title="All 2 branches covered.">	        if(StringUtils.isEmpty(exeFilePath)</span>
+<span class="fc bfc" id="L24" title="All 2 branches covered.">	                || StringUtils.isEmpty(pdfFile)</span>
+<span class="pc bpc" id="L25" title="1 of 2 branches missed.">	                || !&quot;pdf&quot;.equals(type)</span>
+<span class="fc bfc" id="L26" title="All 2 branches covered.">	                || StringUtils.isEmpty(htmlFileName)) {</span>
+<span class="fc" id="L27">	            logger.error(&quot;pdf2htmlのパラメーターが不正です。&quot;);</span>
+<span class="fc" id="L28">	            return false;</span>
+	        }
+<span class="fc" id="L30">	        SystemUtil.isExist(destDir, null);</span>
+<span class="fc" id="L31">	        Runtime rt = Runtime.getRuntime();</span>
+<span class="fc" id="L32">	        StringBuilder command = new StringBuilder();</span>
+<span class="fc" id="L33">	        command.append(exeFilePath).append(&quot; &quot;);</span>
+	        
+	        // 実行コマンド
+<span class="pc bpc" id="L36" title="1 of 4 branches missed.">	        if(destDir != null  &amp;&amp;  !&quot;&quot;.equals(destDir.trim())) {</span>
+<span class="fc" id="L37">	        	command.append(&quot;--dest-dir &quot;).append(destDir.replace(&quot; &quot;, &quot;\&quot; \&quot;&quot;)).append(&quot; &quot;);</span>
+	        	// HTML元素の数量(default: 0)
+<span class="fc" id="L39">	        	command.append(&quot;--optimize-text 1 &quot;);</span>
+<span class="fc" id="L40">	        	command.append(&quot;--zoom 1.4 &quot;);</span>
+	        	//htmlの中でリンクを表示する：0——false，1——true  
+<span class="fc" id="L42">	        	command.append(&quot;--process-outline 0 &quot;);</span>
+	        	//フォント(default ttf) ttf,otf,woff,svg
+<span class="fc" id="L44">	        	command.append(&quot;--font-format woff &quot;);</span>
+	        	//ファイルのパスの中の空欄を削除します
+<span class="fc" id="L46">	        	command.append(pdfFile.replace(&quot; &quot;, &quot;\&quot; \&quot;&quot;)).append(&quot; &quot;);</span>
+<span class="fc" id="L47">	        	command.append(htmlFileName.replace(&quot; &quot;, &quot;\&quot; \&quot;&quot;));</span>
+	        }
+<span class="fc bfc" id="L49" title="All 2 branches covered.">            if(htmlFileName.indexOf(&quot;.html&quot;)==-1)  {</span>
+<span class="fc" id="L50">            	command.append(&quot;.html&quot;);  </span>
+            }
+
+<span class="fc" id="L53">	        logger.info(&quot;Command：&quot;+command.toString());  </span>
+<span class="fc" id="L54">            Process p = rt.exec(command.toString());  </span>
+<span class="fc" id="L55">            StreamGobbler errorGobbler = new StreamGobbler(p.getErrorStream(), &quot;Message&quot;);</span>
+            // スクリーンエラー流
+<span class="fc" id="L57">            errorGobbler.start();    </span>
+<span class="fc" id="L58">            StreamGobbler outGobbler = new StreamGobbler(p.getInputStream(), &quot;STDOUT&quot;);</span>
+            // スクリーン輸出流
+<span class="fc" id="L60">            outGobbler.start();</span>
+<span class="fc" id="L61">            int w = p.waitFor();</span>
+<span class="fc" id="L62">            int v = p.exitValue();</span>
+<span class="pc bpc" id="L63" title="1 of 4 branches missed.">            if(w==0 &amp;&amp; v==0){</span>
+<span class="fc" id="L64">                return true;</span>
+            }  
+<span class="fc" id="L66">        } catch (Exception e) {</span>
+<span class="fc" id="L67">        	logger.error(&quot;pdf2html変換中で例外が発生しました。&quot;, e);</span>
+<span class="fc" id="L68">        	return false;</span>
+<span class="fc" id="L69">        }  </span>
+<span class="fc" id="L70">        return false;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://jacoco.org">JaCoCo</a> 0.5.3.201107060350</span></div></body></html>

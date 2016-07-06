@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd" id="WebApp_ID" version="3.0">
+  <servlet>
+    <description></description>
+    <display-name>ConvertServlet</display-name>
+    <servlet-name>ConvertServlet</servlet-name>
+    <servlet-class>co.jp.fujixerox.regulatory.servlet.ConvertServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>ConvertServlet</servlet-name>
+    <url-pattern>/ConvertServlet</url-pattern>
+  </servlet-mapping>
+  
+    <servlet>
+    <description></description>
+    <display-name>SendPost</display-name>
+    <servlet-name>SendPost</servlet-name>
+    <servlet-class>co.jp.fujixerox.regulatory.util.SendPost</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>SendPost</servlet-name>
+    <url-pattern>/SendPost</url-pattern>
+  </servlet-mapping>
+  
+  
+  <listener>
+	  <listener-class>
+	  	co.jp.fujixerox.regulatory.util.TimerManager
+	  </listener-class>
+  </listener>
+  
+  <welcome-file-list>
+        <welcome-file>convert2html.jsp</welcome-file>
+    </welcome-file-list>
+</web-app>

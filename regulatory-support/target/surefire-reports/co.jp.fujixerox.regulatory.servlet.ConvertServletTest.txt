@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: co.jp.fujixerox.regulatory.servlet.ConvertServletTest
+-------------------------------------------------------------------------------
+Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 60.996 sec
