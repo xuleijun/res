@@ -1,0 +1,121 @@
+﻿private static void getImage(String name_get, String password_get) {
+        GetMethod get = new GetMethod(
+                "你的验证码URL");
+        try {
+            client.executeMethod(get);
+            File storeFile = new File("D:/verifycode.jpg");  //保存在本地的路径
+            FileOutputStream output = new FileOutputStream(storeFile);
+            InputStream is = get.getResponseBodyAsStream();
+            FileOutputStream fos = new FileOutputStream(storeFile);
+            byte[] b = new byte[1024];
+            while ((is.read(b)) != -1) {
+                fos.write(b);
+            }
+            is.close();
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
+
+
+public static String readCheckImage(HashMap<String, String> requestMap) {
+        String url = requestMap.get("url");
+        if (requestMap.get("params") != null) {
+            url += "?" + requestMap.get("params");
+        }
+        InputStream in = null;
+        try {
+            System.out.println("get>>>" + url);
+
+            URL serverUrl = new URL(url);
+            HttpURLConnection conn = (HttpURLConnection) serverUrl.openConnection();
+            conn.setRequestMethod("GET");// "POST" ,"GET"
+            conn.addRequestProperty("Cookie", requestMap.get("cookie"));
+            conn.addRequestProperty("Accept-Charset", "UTF-8;");// GB2312,
+            conn.addRequestProperty("User-Agent",
+                    "Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9.2.8) Firefox/3.6.8");
+            conn.connect();
+            // 判断请求是否成功
+            if (((HttpURLConnection) conn).getResponseCode() == 200) {
+                // 获取所有响应头字段
+                Map<String, List<String>> map = conn.getHeaderFields();
+                // 遍历所有的响应头字段
+                for (String key : map.keySet()) {
+                    System.out.println(key + "--->" + map.get(key));
+                }
+                // 返回的cookie
+                String cookie = null;
+                if (conn.getHeaderFields().get("Set-Cookie") != null) {
+                    for (String s : conn.getHeaderFields().get("Set-Cookie")) {
+                        cookie += s;
+                    }
+                }
+                requestMap.put("cookie", requestMap.get("cookie") + cookie);
+                in = conn.getInputStream();
+
+                BufferedImage bi = ImageIO.read(in);
+                File f = new File("check_img.jpg");
+                ImageIO.write(bi, "jpg", f);
+
+                return f.getAbsolutePath();
+            } else {
+                System.out.println("下载code图片失败！");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }// 使用finally块来关闭输入流
+        finally {
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (Exception e2) {
+                e2.printStackTrace();
+            }
+        }
+        return null;
+    }
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+    URL url = new URL(<a href="http://shop.10010.com/login/getNumberCheckCode.action">http://shop.10010.com/login/getNumberCheckCode.action</a>);  //返回的是4位验证码的图片  
+        File outFile = new File("D:\\image\\a.jpg");  
+        OutputStream os = new FileOutputStream(outFile);  
+        BufferedReader bf = new BufferedReader(new InputStreamReader(url.openStream()));  
+      
+        InputStream is = url.openStream();  
+        byte[] buff = new byte[1024];  
+        while(true) {    //要注意这种写法  
+            int readed = is.read(buff);  
+            if(readed == -1) {  
+                break;  
+            }  
+            byte[] temp = new byte[readed];  
+            System.arraycopy(buff, 0, temp, 0, readed);   // 这句是关键  
+            os.write(temp);  
+        }  
+        is.close();   
+        os.close();  
